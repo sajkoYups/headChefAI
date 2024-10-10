@@ -1,38 +1,178 @@
 .App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
 }
 
 .App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 30px;
+  padding: 20px 0;
+  background-color: #f8f8f8; /* Light gray background */
+}
+
+.app-logo {
+  height: 120px; /* Increased from 80px to 120px */
+  margin-right: 20px;
+}
+
+h1 {
+  color: #330068;
+  margin: 0;
+  font-size: 2.5rem; /* Increased font size */
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+button {
+  background-color: #ff7f00;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #e67300;
+}
+
+.error {
+  color: red;
+  text-align: center;
+}
+
+.recipe,
+.favorite-recipe {
+  background-color: #f9f9f9;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 5px;
+}
+
+.ingredient-input {
+  position: relative;
+}
+
+.ingredient-input-container {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto 20px;
+}
+
+.input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.input-container {
+  position: relative;
+  width: 100%;
+}
+
+.ingredient-input-container input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.ingredient-input-container button {
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #ff7f00;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 0 0 4px 4px;
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.suggestions li {
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.suggestions li:hover {
+  background-color: #f0f0f0;
+}
+
+@media (min-width: 601px) {
+  .input-wrapper {
+    flex-direction: row;
+  }
+
+  .input-container {
+    flex-grow: 1;
+  }
+
+  .ingredient-input-container button {
+    width: auto;
+  }
+}
+
+.recipe-image {
+  width: 50%; /* This will make the image 50% of its container's width */
+  max-width: 512px; /* This ensures the image is never larger than 512px */
+  height: auto; /* This maintains the aspect ratio */
+  display: block; /* This centers the image if it's smaller than its container */
+  margin: 0 auto; /* This centers the image if it's smaller than its container */
+  border-radius: 8px;
+}
+
+.loading-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  margin-top: 2rem;
 }
 
-.App-link {
-  color: #61dafb;
+.loading-logo {
+  width: 250px; /* Increased size */
+  height: 250px; /* Increased size */
+  animation: colorize 2s linear infinite alternate;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+.loading-message {
+  font-size: 1.5rem; /* Increased font size */
+  text-align: center;
+  margin-top: 1rem;
+}
+
+@keyframes colorize {
+  0% {
+    filter: grayscale(100%);
   }
-  to {
-    transform: rotate(360deg);
+  100% {
+    filter: grayscale(0%);
   }
 }
