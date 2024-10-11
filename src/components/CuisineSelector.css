@@ -1,0 +1,45 @@
+.cuisine-selector {
+  margin: 20px 0;
+}
+
+.cuisine-selector h3 {
+  color: #4caf50;
+}
+
+.cuisine-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.cuisine-option {
+  display: flex;
+  align-items: center;
+  background-color: #f0f0f0;
+  border-radius: 20px;
+  padding: 8px 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cuisine-option:hover {
+  background-color: #e0e0e0;
+}
+
+.cuisine-option input[type="checkbox"] {
+  display: none;
+}
+
+.cuisine-option .cuisine-name {
+  font-size: 14px;
+}
+
+.cuisine-option input[type="checkbox"]:checked + .cuisine-name {
+  font-weight: bold;
+  color: #4caf50;
+}
+
+.cuisine-option input[type="checkbox"]:checked + .cuisine-name::before {
+  content: "✓ ";
+}

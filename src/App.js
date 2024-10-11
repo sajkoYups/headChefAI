@@ -1,317 +1,296 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { initializeApp } from "firebase/app";
+import {
+  getAuth,
+  signInWithPopup,
+  GoogleAuthProvider,
+  signOut,
+} from "firebase/auth";
 import "./App.css";
-import dallelogo from "./assets/images/DALL-E.png"; // Adjust the path if necessary
+import dallelogo from "./assets/images/DALL-E.png";
 import IngredientInput from "./components/IngredientInput";
 import RecipeList from "./components/RecipeList";
 import FavoriteRecipes from "./components/FavoriteRecipes";
-// import OpenAI from "openai";
+import foodStories from "./foodStories";
+import CuisineSelector from "./components/CuisineSelector";
+import LoadingModal from "./components/LoadingModal"; // Add this import
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
 function App() {
+  const [user, setUser] = useState(null);
   const [recipes, setRecipes] = useState([]);
   const [ingredients, setIngredients] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
-
-  // Add this array of common ingredients
-  const commonIngredients = [
-    "chicken",
-    "beef",
-    "pork",
-    "fish",
-    "tomato",
-    "onion",
-    "garlic",
-    "potato",
-    "carrot",
-    "broccoli",
-    "spinach",
-    "rice",
-    "pasta",
-    "cheese",
-    "egg",
-    "milk",
-    "butter",
-    "olive oil",
-    "salt",
-    "pepper",
-    "flour",
-    "sugar",
-    "apple",
-    "banana",
-    "orange",
-    "lemon",
-    "lime",
-    "avocado",
-    "cucumber",
-    "lettuce",
-    "bell pepper",
-    "mushroom",
-    "zucchini",
-    "eggplant",
-    "corn",
-    "peas",
-    "beans",
-    "lentils",
-    "chickpeas",
-    "quinoa",
-    "oats",
-    "bread",
-    "yogurt",
-    "cream",
-    "sour cream",
-    "mayonnaise",
-    "mustard",
-    "ketchup",
-    "soy sauce",
-    "vinegar",
-    "honey",
-    "maple syrup",
-    "chocolate",
-    "vanilla",
-    "cinnamon",
-    "cumin",
-    "paprika",
-    "oregano",
-    "basil",
-    "thyme",
-    "rosemary",
-    "ginger",
-    "turmeric",
-    "coconut milk",
-    "almond milk",
-    "tofu",
-    "shrimp",
-    "salmon",
-    "tuna",
-    "bacon",
-    "ham",
-    "sausage",
-  ];
-
-  // Initialize favorites from local storage
-  const [favorites, setFavorites] = useState(() => {
-    const savedFavorites = localStorage.getItem("favorites");
-    return savedFavorites ? JSON.parse(savedFavorites) : [];
-  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  // Initialize OpenAI client
-  // const openai = new OpenAI({
-  //   apiKey: process.env.REACT_APP_OPENAI_API_KEY,
-  //   dangerouslyAllowBrowser: true, // Note: This is not recommended for production
-  // });
+  const [currentStory, setCurrentStory] = useState("");
+  const [selectedCuisines, setSelectedCuisines] = useState([]); // Add this line
+  const [favorites, setFavorites] = useState([]); // Add this line
+  const abortControllerRef = useRef(null);
 
   useEffect(() => {
-    localStorage.setItem("favorites", JSON.stringify(favorites));
-  }, [favorites]);
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
 
-  const generateImage = async (recipeName) => {
-    try {
-      const response = await fetch(
-        "https://api.openai.com/v1/images/generations",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`,
-          },
-          body: JSON.stringify({
-            model: "dall-e-3",
-            prompt: `Create a realistic image of a plate of ${recipeName}. It sholud look appetizing and realistic. It should be a high quality image. It should be a picture of a plate of food.`,
-            n: 1,
-            size: "1024x1024",
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.data[0].url;
-    } catch (error) {
-      console.error("Error generating image:", error);
-      if (error.response) {
-        console.error(error.response.status, error.response.data);
-      } else {
-        console.error(error.message);
-      }
-      return null;
+  useEffect(() => {
+    if (isLoading) {
+      setRandomStory();
     }
+  }, [isLoading]);
+
+  const setRandomStory = () => {
+    const randomIndex = Math.floor(Math.random() * foodStories.length);
+    setCurrentStory(foodStories[randomIndex]);
   };
 
-  /**
-   * Fetches recipes based on provided ingredients and generates images for each recipe.
-   *
-   * @param {string} message - A comma-separated list of ingredients.
-   * @returns {Promise<Array>} A promise that resolves to an array of recipe objects.
-   *
-   * This function performs the following steps:
-   * 1. Sets loading state and clears any previous errors.
-   * 2. Makes an API call to OpenAI's GPT-3.5-turbo model to generate recipes.
-   * 3. Parses the response and extracts the recipe data.
-   * 4. Generates an image for each recipe using the DALL-E API.
-   * 5. Combines the recipe data with the generated images.
-   * 6. Updates the component state with the new recipes.
-   *
-   * If any errors occur during this process, it sets an error state and logs the error.
-   */
-  const fetchRecipes = async (message) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(
-        "https://api.openai.com/v1/chat/completions",
-        {
+  const signIn = () => {
+    const provider = new GoogleAuthProvider();
+    signInWithPopup(auth, provider).catch((error) => {
+      console.error("Error signing in with Google", error);
+    });
+  };
+
+  const signOutUser = () => {
+    signOut(auth)
+      .then(() => {
+        // Clear recipes and favorites when user signs out
+        setRecipes([]);
+        setFavorites([]);
+        setError(null);
+      })
+      .catch((error) => {
+        console.error("Error signing out", error);
+      });
+  };
+
+  const generateImage = useCallback(
+    async (recipeName) => {
+      try {
+        const response = await fetch("http://localhost:3001/generate-image", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`,
+            Authorization: user ? `Bearer ${await user.getIdToken()}` : "",
           },
-          body: JSON.stringify({
-            model: "gpt-3.5-turbo",
-            messages: [
-              {
-                role: "system",
-                content:
-                  "You are an expert chef and know all possible recipes. You will only give recipes based on the ingredients provided. You will not give any other response no matter what. You will generate 3 recipes using the provided ingredients. You will give detailed instructions on how to make the recipes. Leave no step unexplained. Format the response as a valid JSON array with objects containing 'name' and 'instructions' properties. Do not include any markdown formatting or code block syntax in your response.",
-              },
-              { role: "user", content: message },
-            ],
-            max_tokens: 1500,
-            temperature: 0.7,
-          }),
+          body: JSON.stringify({ recipeName }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-      );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        return data.imageUrl;
+      } catch (error) {
+        console.error("Error generating image:", error);
+        return null;
       }
+    },
+    [user]
+  );
 
-      const data = await response.json();
-      let recipesString = data.choices[0].message.content;
+  const fetchRecipes = useCallback(
+    async (message, selectedCuisines) => {
+      setIsLoading(true);
+      setError(null);
 
-      console.log("Raw API response:", recipesString);
-
-      // Remove any Markdown code block syntax
-      recipesString = recipesString.replace(/```json\n?|\n?```/g, "").trim();
-
-      console.log("Cleaned response:", recipesString);
+      // Create a new AbortController instance
+      abortControllerRef.current = new AbortController();
 
       try {
-        const recipesArray = JSON.parse(recipesString);
-        console.log("Parsed recipes:", recipesArray);
-
-        // Generate images for each recipe
-        const imagesPromises = recipesArray.map((recipe) =>
-          generateImage(recipe.name)
+        console.log(
+          "Sending request with ingredients:",
+          message,
+          "and cuisines:",
+          selectedCuisines
         );
-        const images = await Promise.all(imagesPromises);
+        const response = await fetch("http://localhost:3001/search", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: user ? `Bearer ${await user.getIdToken()}` : "",
+          },
+          body: JSON.stringify({
+            ingredients: message,
+            cuisines: selectedCuisines,
+          }),
+          signal: abortControllerRef.current.signal, // Add this line
+        });
 
-        const recipesWithImages = recipesArray.map((recipe, index) => ({
-          ...recipe,
-          image: images[index],
-        }));
+        if (!response.ok) {
+          let errorMessage = "Failed to fetch recipes. Please try again.";
+          if (response.status === 401) {
+            errorMessage =
+              "You've reached the search limit. Please sign in to continue.";
+          } else if (response.status === 404) {
+            errorMessage = "No recipes found. Try different ingredients.";
+          }
+          // You can add more specific error messages for other status codes if needed
+
+          const errorData = await response.json();
+          console.error("Error response:", errorData);
+          setError(errorMessage);
+          setRecipes([]);
+          return;
+        }
+
+        const data = await response.json();
+        console.log("Received data:", data);
+        const recipesWithImages = await Promise.all(
+          data.recipes.map(async (recipe) => ({
+            ...recipe,
+            image: await generateImage(recipe.name),
+          }))
+        );
 
         setRecipes(recipesWithImages);
         return recipesWithImages;
-      } catch (parseError) {
-        console.error("Error parsing recipes:", parseError);
-        setError(
-          "Failed to parse recipes. The API response was not valid JSON."
-        );
-        throw parseError;
+      } catch (error) {
+        if (error.name === "AbortError") {
+          console.log("Fetch aborted");
+        } else {
+          console.error("Error details:", error);
+          setError("An unexpected error occurred. Please try again later.");
+        }
+        setRecipes([]);
+      } finally {
+        setIsLoading(false);
+        abortControllerRef.current = null;
       }
-    } catch (error) {
-      console.error(
-        "Error details:",
-        error.response ? error.response.data : error
-      );
-      setError("Failed to fetch recipes. Please try again.");
-      throw error;
-    } finally {
-      setIsLoading(false);
+    },
+    [user, generateImage]
+  );
+
+  const handleSearch = async () => {
+    if (!ingredients.trim()) {
+      setError("Please enter some ingredients before searching.");
+      return;
     }
-  };
-
-  const handleIngredientChange = (value) => {
-    setIngredients(value);
-    if (value.length > 0) {
-      const lastIngredient = value.split(",").pop().trim().toLowerCase();
-      const filteredSuggestions = commonIngredients.filter((ingredient) =>
-        ingredient.toLowerCase().includes(lastIngredient)
-      );
-      setSuggestions(filteredSuggestions);
-    } else {
-      setSuggestions([]);
-    }
-  };
-
-  const handleSuggestionClick = (suggestion) => {
-    setIngredients((prevIngredients) => {
-      const ingredientList = prevIngredients.split(",").map((i) => i.trim());
-      ingredientList.pop();
-      return [...ingredientList, suggestion].join(", ");
-    });
-    setSuggestions([]);
-  };
-
-  const onclickbbutton = () => {
-    fetchRecipes(ingredients)
-      .then((reply) => console.log(reply))
-      .catch((error) => console.error("Error:", error));
+    await fetchRecipes(ingredients, selectedCuisines);
   };
 
   const addToFavorites = (recipe) => {
-    // Check if the recipe is already in favorites
-    if (!favorites.some((fav) => fav.name === recipe.name)) {
-      const updatedFavorites = [...favorites, recipe];
-      setFavorites(updatedFavorites);
-      localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
-    }
+    setFavorites((prevFavorites) => [...prevFavorites, recipe]);
   };
 
-  const removeFromFavorites = (recipe) => {
-    setFavorites(favorites.filter((fav) => fav.name !== recipe.name));
+  const removeFromFavorites = (recipeToRemove) => {
+    setFavorites((prevFavorites) =>
+      prevFavorites.filter((recipe) => recipe.name !== recipeToRemove.name)
+    );
+  };
+
+  const cancelSearch = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setIsLoading(false);
+    setError(null);
   };
 
   return (
     <div className="App">
       <header className="App-header">
-        <img src={dallelogo} alt="DALL-E Logo" className="app-logo" />
-        <h1>Head Cook AI</h1>
-      </header>
-      <IngredientInput
-        ingredients={ingredients}
-        setIngredients={handleIngredientChange}
-        onSubmit={onclickbbutton}
-        suggestions={suggestions}
-        onSuggestionClick={handleSuggestionClick}
-      />
-      {isLoading ? (
-        <div className="loading-container">
-          <p className="loading-message">Please be patient</p>
-          <img src={dallelogo} alt="Loading" className="loading-logo" />
-          <p className="loading-message">
-            I am carefully crafting recipes just for you.
-            <br />
-            These ingredients will make a wonderful meal!
-          </p>
-        </div>
-      ) : error ? (
-        <p className="error">{error}</p>
-      ) : (
-        <>
-          {recipes.length > 0 && (
-            <RecipeList recipes={recipes} addToFavorites={addToFavorites} />
+        {/* <img src={dallelogo} alt="DALL-E Logo" className="app-logo" /> */}
+        <h1>Head Chef Antonio AI</h1>
+        <div className="auth-button">
+          {user ? (
+            <button onClick={signOutUser}>Sign Out</button>
+          ) : (
+            <button onClick={signIn}>Sign In with Google</button>
           )}
+        </div>
+      </header>
+      <main>
+        <div className="welcome-container">
+          <div className="welcome-logo-container">
+            <img src={dallelogo} alt="DALL-E Logo" className="welcome-logo" />
+          </div>
+          <div className="welcome-message">
+            <h2>Welcome to Head Chef Antonio AI!</h2>
+            <p>
+              Unlock the magic of your kitchen with our AI-powered recipe
+              generator! Simply enter the ingredients you have on hand, and
+              watch as Head Chef Antonio crafts personalized, mouthwatering
+              recipes just for you. Whether you're a seasoned cook or a curious
+              beginner, let's turn your ingredients into culinary masterpieces.
+              Ready to embark on a delicious adventure?
+            </p>
+          </div>
+        </div>
+        <CuisineSelector onCuisineChange={setSelectedCuisines} />
+        <IngredientInput
+          ingredients={ingredients}
+          setIngredients={setIngredients}
+          onSubmit={handleSearch}
+        />
+        {error && <p className="error">{error}</p>}
+        {user && recipes.length > 0 ? (
+          <RecipeList recipes={recipes} addToFavorites={addToFavorites} />
+        ) : (
+          !error && (
+            <p>
+              {user
+                ? "Looks like your recipe book is empty! Why not explore some delicious dishes by searching for ingredients you love?"
+                : "Welcome to Head Chef Antonio AI! You can try one free search without signing in. For unlimited recipe discoveries, create a free account and unlock a world of culinary possibilities. Let's start cooking up some magic together!"}
+            </p>
+          )
+        )}
+        {user && favorites.length > 0 && (
           <FavoriteRecipes
             favorites={favorites}
             removeFromFavorites={removeFromFavorites}
           />
-        </>
-      )}
+        )}
+      </main>
+      <footer className="App-footer">
+        <div className="footer-content">
+          <p>&copy; 2023 Head Chef Antonio AI. All rights reserved.</p>
+          <div className="social-links">
+            <a
+              href="https://twitter.com/HeadChefAntonio"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Twitter
+            </a>
+            <a
+              href="https://www.instagram.com/headchefantonio"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Instagram
+            </a>
+            <a
+              href="https://www.facebook.com/HeadChefAntonioAI"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Facebook
+            </a>
+          </div>
+        </div>
+      </footer>
+      <LoadingModal
+        isLoading={isLoading}
+        onCancel={cancelSearch}
+        dallelogo={dallelogo}
+        currentStory={currentStory}
+        setRandomStory={setRandomStory}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import React from "react";
 
-function FavoriteRecipes({ favorites, removeFromFavorites }) {
+function FavoriteRecipes({ favorites = [], removeFromFavorites }) {
   return (
     <div className="favorite-recipes">
       <h2>Favorite Recipes</h2>

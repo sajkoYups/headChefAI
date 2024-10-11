@@ -1,0 +1,19 @@
+const foodStories = [
+  "Caesar Salad: Caesar Cardini, an Italian-American restaurateur, invented the Caesar Salad in Tijuana, Mexico, in 1924. It was created on the spot with what was available to impress some guests during a 4th of July rush.",
+  "Margherita Pizza: In 1889, Queen Margherita of Italy visited Naples. A local pizzaiolo created a pizza with tomatoes, mozzarella, and basil to represent the Italian flag. The Queen loved it, and the pizza was named in her honor.",
+  'French Fries: Despite the name, French fries likely originated in Belgium. Villagers in the Meuse Valley used to fry fish, but during the winter when the river froze, they fried potatoes instead. American soldiers in World War I tasted them there and called them "French" because French was the dominant language.',
+  "Worcestershire Sauce: Two chemists, John Lea and William Perrins, initially made a batch of Worcestershire sauce in the 1830s that tasted horrible. They left it in their cellar, only to discover months later that the flavors had matured into the iconic sauce we know today.",
+  "Coca-Cola: John Pemberton, a pharmacist, originally invented Coca-Cola as a medicinal tonic in 1886, intending it to be a cure for headaches and hangovers. The drink contained cocaine from coca leaves until it was removed in the early 20th century.",
+  "Potato Chips: In 1853, a chef named George Crum created potato chips by accident in Saratoga Springs, New York. After a customer repeatedly complained that his fries were too thick, Crum sliced the potatoes paper-thin, fried them to a crisp, and the chips were born.",
+  'Ketchup: Ketchup started as a fish-based fermented sauce in China in the 17th century. It was called "kê-tsiap," and over time, British sailors brought the recipe back to England, where tomatoes were added, eventually leading to the ketchup we love today.',
+  "Pasta Carbonara: The origins of Pasta Carbonara are mysterious, but a popular theory is that American soldiers in Rome during World War II mixed their bacon and powdered eggs with local pasta, creating the creamy dish.",
+  "Tabasco Sauce: In 1868, Edmund McIlhenny began making Tabasco sauce using pepper seeds he received from Central America. He aged the peppers in barrels and reused old perfume bottles to package the sauce, giving it its signature look.",
+  "Chocolate Chip Cookies: Ruth Wakefield invented the chocolate chip cookie in the 1930s when she ran out of baker's chocolate and substituted it with broken pieces of Nestlé chocolate. The chunks didn't melt as expected, creating a delicious new treat.",
+  "Sriracha: The now-famous Sriracha hot sauce was invented by David Tran, a Vietnamese immigrant who arrived in the U.S. in 1980. He started making it in Los Angeles and named it after the coastal city of Si Racha in Thailand.",
+  'Sandwich: The sandwich is named after John Montagu, the 4th Earl of Sandwich, in 18th-century England. He asked for his meat to be served between slices of bread so he could eat without leaving his gambling table, and soon others ordered "the same as Sandwich."',
+  "Chicken Tikka Masala: This dish is said to have been created in Glasgow, Scotland, in the 1970s. A chef added a creamy tomato sauce to his chicken tikka at a customer's request, creating what is now considered a national dish of the UK.",
+  "Fortune Cookies: Despite their association with Chinese restaurants in the U.S., fortune cookies were actually invented in Japan. They were introduced to America by Japanese immigrants in the early 20th century before becoming popular in Chinese eateries.",
+  'Nachos: In 1943, Ignacio "Nacho" Anaya, a Mexican maître d\', created nachos for some hungry American military wives in Piedras Negras, Mexico. With limited ingredients, he topped tortilla chips with cheese and jalapeños, giving birth to the popular snack.',
+];
+
+export default foodStories;
